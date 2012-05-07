@@ -4,7 +4,7 @@ This is the basic information about project SpiderWeb.
 ==============
 
 SpiderWeb is a visualization tool for P2P Simulation. Apologies to others who may have used the same project name.
-The simulation tools themselves (or pointers to them) will soon be added to this project repository.
+The simulation tools themselves are available in the NMAI-lab/P2PSimulation repository.
 
 At this point the project is a simple java application / applet that can be used to view simulation results as a "video"-like animation.
 In the simulation view, the red circles represent peers, and the lines connecting them are network connections. 
