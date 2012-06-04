@@ -16,6 +16,7 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.renderer.xy.XYShapeRenderer;
 import org.jfree.chart.renderer.xy.XYStepRenderer;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
@@ -68,7 +69,7 @@ public class GraphStatisticsPanel extends JPanel implements StatChangeListener{
 	public GraphStatisticsPanel(P2PNetworkGraph g) {
 		
 		numberPeersOnline = 0;
-		directed = true;
+		directed = false;
 		currentGraph = g;
 		queryFreq = new ArrayList<QueryFreq>();
 		diameterTimeList = new ArrayList<DiameterTimeList>();
@@ -160,20 +161,28 @@ public class GraphStatisticsPanel extends JPanel implements StatChangeListener{
 			{
 				int index =0;
 				boolean found = false;
+				
+				
+				
+				
 				//Current Event is a queryhit, so update the frequency of the appropriate query
+				//Currently, not all the queryhits/queryreachespeer are being found, which is odd
 				for(int i = multiplier; i >=0 ;i--)
 				{
-					if(queryFreq.contains(new QueryFreq(0, queryId+(1000*multiplier),0, 0))){
-						index = queryFreq.indexOf(new QueryFreq(0, queryId+(1000*multiplier), 0, 0));
+					QueryFreq action = new QueryFreq(0, queryId+(1000*i),0, 0);
+					if(queryFreq.contains(action)){
+						index = queryFreq.indexOf(action);
 						found = true;
 						break;
 					}
 				}
+				
+				
+				
 				if(found){
 					QueryFreq temp = queryFreq.get(index);
 					if(evt.getType().equals("queryhit"))
 					{
-						//System.out.println("queryhit - index: " + index + " - queryId: " + queryId + " - multiplier: " + multiplier );
 						temp.setFrenquency(temp.getFrequency()+1);
 					}
 					else{
@@ -182,22 +191,38 @@ public class GraphStatisticsPanel extends JPanel implements StatChangeListener{
 					
 				}
 
+
 			}
 			
 			
 			
 			
+			
+			
+			
+			
+			
 		}
-		
 
 		XYDataset dataset = createDataset(queryFreq);
 		chart = createChart(dataset);
 		graphPane = new ChartPanel(chart);
+		
+		XYShapeRenderer r = new XYShapeRenderer();
+		r.setPaint(Color.BLACK);
+		r.setShape(new Rectangle(-1,-1,2,2));  //makes the squares smaller
+		//r.setShapesVisible(true);
+		//r.setShapesFilled(true);
+		XYDataset dataset3 = createDataset3(queryFreq);
+		addXYScatterPlot(dataset3, r,2);		
+		
+		
+		
 		jtabbedPane.setComponentAt(jtabbedPane.indexOfTab("Tab2"), graphPane);
+		
 		try {
 			ChartUtilities.saveChartAsPNG(new File("C:\\eclipse\\workspace\\SpiderWeb\\graph.png"), chart, 800, 800);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -296,7 +321,7 @@ public class GraphStatisticsPanel extends JPanel implements StatChangeListener{
 				XYStepRenderer step = new XYStepRenderer();
 				step.setPaint(Color.BLUE);
 				dataset2 = createDataset2(diameterTimeList);
-				addStepPlot(dataset2, step);
+				addStepPlot(dataset2, step,1);
 				
 
 				
@@ -334,13 +359,12 @@ public class GraphStatisticsPanel extends JPanel implements StatChangeListener{
 				XYStepRenderer step = new XYStepRenderer();
 				step.setPaint(Color.BLUE);
 				dataset2 = createDataset2(diameterTimeList);
-				addStepPlot(dataset2, step);
+				addStepPlot(dataset2, step,1);
 			}
 		}
 		try {
 			ChartUtilities.saveChartAsPNG(new File("C:\\eclipse\\workspace\\SpiderWeb\\graph.png"), chart, 800, 800);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -392,17 +416,39 @@ public class GraphStatisticsPanel extends JPanel implements StatChangeListener{
 		return dataset;
 		
 	}
+
+	private static XYDataset createDataset3(ArrayList<QueryFreq> queryFreq) {
+		
+		XYSeriesCollection dataset = new XYSeriesCollection();
+		XYSeries series1 = new XYSeries("Peers Reached");
+		
+		for(QueryFreq q: queryFreq)
+		{
+			series1.add((double)q.getTime()/1000, q.getPeersReached());
+		}
+		dataset.addSeries(series1);
+		return dataset;
+		
+	}
 	
 	/*
 	 * Since the diameter of the network graph changes throughout the simulation, the step plot of
 	 * the diameter needs to be redrawn whenever the diameter changes.
 	 * */
-	private void addStepPlot(XYDataset dataset, XYStepRenderer Step) {
+	private void addStepPlot(XYDataset dataset, XYStepRenderer Step, int rendererIndex) {
 		
 		JFreeChart chart = graphPane.getChart();
 		XYPlot plot = (XYPlot) chart.getPlot();
 		plot.setDataset(1,dataset);
 		plot.setRenderer(1,Step);
+		
+	}
+	private void addXYScatterPlot(XYDataset dataset, XYShapeRenderer renderer, int rendererIndex){
+		
+		JFreeChart chart = graphPane.getChart();
+		XYPlot plot = (XYPlot) chart.getPlot();
+		plot.setDataset(rendererIndex, dataset);
+		plot.setRenderer(rendererIndex, renderer);
 		
 	}
 	
